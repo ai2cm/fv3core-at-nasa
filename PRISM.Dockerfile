@@ -16,7 +16,7 @@ RUN apt-get update -y && apt install -y libmpich-dev
 RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     python3.8 \
-    python3.8-dev \
+    python3.8-dev &&\
     rm -rf /var/lib/apt/lists/*
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py &&\
     python3.8 get-pip.py
