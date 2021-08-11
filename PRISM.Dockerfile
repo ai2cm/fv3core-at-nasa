@@ -22,6 +22,8 @@ RUN apt-get update -y && \
     python3.8-dev &&\
     rm -rf /var/lib/apt/lists/*
 
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.8.10
+
 RUN python -m ensurepip --upgrade
 RUN pip --no-cache-dir install --upgrade pip && \
     pip --no-cache-dir install setuptools &&\
