@@ -1,0 +1,22 @@
+#---------------------------------------------------------------------------------------
+# Derived from: https://gitlab.nccs.nasa.gov/nccs-ci/nccs-containers/-/blob/master/.gitlab-ci.yml
+#
+# Maintainer: floriand@vulcan.com, rheag@vulcan.com, eddied@vulcan.com
+#---------------------------------------------------------------------------------------
+stages:
+  - build_fv3core
+
+build_fv3core_ubuntu18:
+  stage: build_fv3core
+  tags:
+    - build
+    - push
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - >
+      /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/PRISM.Dockerfile 
+      --destination $CI_REGISTRY/nccs-ci/nccs-containers/fv3core-at-nasa/fv3core_ubuntu18:latest
