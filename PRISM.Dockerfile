@@ -12,23 +12,14 @@ RUN dpkg-divert --remove /usr/bin/gfortran && apt-get update -y && apt install -
 
 RUN apt-get update -y && apt install -y libmpich-dev
 
-# Python
+# Python & common py packages
 RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    python \
-    python-dev \
     python3.8 \
-    python3.8-dev && \
-    rm -rf /var/lib/apt/lists/*
-
-# common py packages
-
-# pip
-RUN apt-get update -y && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    python3-pip \
-    python3-setuptools \
-    python3-wheel && \
+    python3.8-dev \
+    python3.8-pip \
+    python3.8-setuptools \
+    python3.8-wheel && \
     rm -rf /var/lib/apt/lists/*
 RUN pip3 --no-cache-dir install --upgrade pip && \
     pip3 --no-cache-dir install kiwisolver numpy matplotlib cupy-cuda112 Cython h5py six zipp pytest pytest-profiling pytest-subtests  hypothesis gitpython clang-format gprof2dot cftime f90nml pandas pyparsing python-dateutil pytz pyyaml xarray zarr git+https://github.com/mpi4py/mpi4py.git@aac3d8f2a56f3d74a75ad32ac0554d63e7ef90ab
