@@ -19,4 +19,4 @@ build_fv3core_ubuntu18:
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > /kaniko/.docker/config.json
     - >
       /kaniko/executor --context $CI_PROJECT_DIR --dockerfile $CI_PROJECT_DIR/PRISM.Dockerfile 
-      --destination $CI_REGISTRY/nccs-ci/nccs-containers/fv3core-at-nasa/fv3core_ubuntu18:latest
+      --destination $CI_REGISTRY/fgdeconi/fv3core-at-nasa/fv3core_ubuntu18:latest
