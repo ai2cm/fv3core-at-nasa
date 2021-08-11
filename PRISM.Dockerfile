@@ -17,8 +17,8 @@ RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     python \
     python-dev \
-    python3 \
-    python3-dev && \
+    python3.8 \
+    python3.8-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # common py packages
