@@ -4,19 +4,22 @@ FROM nvcr.io/nvidia/cuda:11.2.0-base-ubuntu18.04
 
 FROM nvcr.io/nvidia/cuda:11.2.0-runtime-ubuntu18.04
 
-# mpich
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update -y && apt install -y git
+# Git & mpich-dev
 
-RUN dpkg-divert --remove /usr/bin/gfortran && apt-get update -y && apt install -y gfortran
+RUN apt-get update -y &&\
+    apt install -y --no-install-recommends\
+    git\
+    gfortran\
+    libmpich-dev
 
-RUN apt-get update -y && apt install -y libmpich-dev
+# Python & common py packages
 
 RUN python --version
 
-# Python & common py packages
 RUN apt-get update -y && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    apt-get install -y --no-install-recommends \
     python3.8 \
     python3.8-dev &&\
     rm -rf /var/lib/apt/lists/*
