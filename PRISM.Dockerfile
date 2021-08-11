@@ -15,12 +15,10 @@ RUN apt-get update -y && apt install -y libmpich-dev
 # Python & common py packages
 RUN apt-get update -y && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    curl \
     python3.8 \
     python3.8-dev &&\
     rm -rf /var/lib/apt/lists/*
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py &&\
-    python3.8 get-pip.py
+RUN python3 -m ensurepip --upgrade
 RUN pip3 --no-cache-dir install --upgrade pip && \
     pip3 --no-cache-dir install setuptools &&\
     pip3 --no-cache-dir install wheel &&\
