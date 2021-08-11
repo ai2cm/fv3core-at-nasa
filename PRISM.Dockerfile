@@ -16,21 +16,17 @@ RUN apt-get update -y &&\
 
 # Python & common py packages
 
-RUN python --version
-
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
     python3.8 \
     python3.8-dev &&\
     rm -rf /var/lib/apt/lists/*
 
-RUN python --version
-
 RUN python -m ensurepip --upgrade
-RUN pip3 --no-cache-dir install --upgrade pip && \
-    pip3 --no-cache-dir install setuptools &&\
-    pip3 --no-cache-dir install wheel &&\
-    pip3 --no-cache-dir install kiwisolver numpy matplotlib cupy-cuda112 Cython h5py six zipp pytest pytest-profiling pytest-subtests  hypothesis gitpython clang-format gprof2dot cftime f90nml pandas pyparsing python-dateutil pytz pyyaml xarray zarr git+https://github.com/mpi4py/mpi4py.git@aac3d8f2a56f3d74a75ad32ac0554d63e7ef90ab
+RUN pip --no-cache-dir install --upgrade pip && \
+    pip --no-cache-dir install setuptools &&\
+    pip --no-cache-dir install wheel &&\
+    pip --no-cache-dir install kiwisolver numpy matplotlib cupy-cuda112 Cython h5py six zipp pytest pytest-profiling pytest-subtests  hypothesis gitpython clang-format gprof2dot cftime f90nml pandas pyparsing python-dateutil pytz pyyaml xarray zarr git+https://github.com/mpi4py/mpi4py.git@aac3d8f2a56f3d74a75ad32ac0554d63e7ef90ab
 
 # Boost version 1.76.0
 RUN apt-get update -y && \
@@ -71,24 +67,17 @@ ENV PYTHONPATH=/usr/local/serialbox/python:$PYTHONPATH
 
 # gt4py
 
-# pip
-RUN apt-get update -y && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    python3-pip \
-    python3-setuptools \
-    python3-wheel && \
-    rm -rf /var/lib/apt/lists/*
-RUN pip3 --no-cache-dir install git+https://github.com/VulcanClimateModeling/gt4py.git@v30
+RUN pip --no-cache-dir install git+https://github.com/VulcanClimateModeling/gt4py.git@v30
 
 RUN git clone --depth 1 -b release_v1.1         https://github.com/GridTools/gridtools.git         /usr/local/lib/python3.8/dist-packages/gt4py/_external_src/gridtools
 
 # fv3gfs-util
 
 RUN git clone https://github.com/VulcanClimateModeling/fv3gfs-util.git && \
-    pip3 install -e fv3gfs-util
+    pip install -e fv3gfs-util
 
 # fv3core
 
 RUN git clone https://github.com/VulcanClimateModeling/fv3core.git && \
-    pip3 install -e fv3core
+    pip install -e fv3core
 
