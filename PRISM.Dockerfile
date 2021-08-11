@@ -18,11 +18,12 @@ RUN apt-get update -y &&\
 
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
+    python \
     python3.8 \
     python3.8-dev &&\
     rm -rf /var/lib/apt/lists/*
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.8.10
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.8.0
 
 RUN python -m ensurepip --upgrade
 RUN pip --no-cache-dir install --upgrade pip && \
