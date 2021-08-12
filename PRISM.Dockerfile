@@ -88,7 +88,7 @@ ENV PATH=/usr/local/bin:$PATH
 # serialbox
 
 RUN git clone -b v2.6.0 --depth 1 https://github.com/GridTools/serialbox.git /usr/src/serialbox && \
-    cmake -B build -S /usr/src/serialbox -DSERIALBOX_TESTING=ON         -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local/serialbox         -DNETCDF_ROOT=/usr/local/netcdf && \
+    cmake -B build -S /usr/src/serialbox -DSERIALBOX_TESTING=ON  -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local/serialbox && \
     cmake --build build/ -j 4 --target install && \
     rm -rf /usr/src
 
