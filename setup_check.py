@@ -3,6 +3,11 @@ import gt4py.gtscript as gtscript
 from gt4py.gtscript import Field, computation, interval, PARALLEL
 import numpy as np
 
+try:
+    import cupy as cp
+except ImportError:
+    cp = None
+
 import os
 
 print(os.getenv("BOOST_ROOT"))
@@ -15,9 +20,10 @@ np_a = gt4py.storage.ones(
 x86_a = gt4py.storage.ones(
     shape=(10, 10, 10), default_origin=(1, 1, 1), dtype=dtype, backend="gtx86"
 )
-cu_a = gt4py.storage.ones(
-    shape=(10, 10, 10), default_origin=(1, 1, 1), dtype=dtype, backend="gtcuda"
-)
+if cp is not None:
+    cu_a = gt4py.storage.ones(
+        shape=(10, 10, 10), default_origin=(1, 1, 1), dtype=dtype, backend="gtcuda"
+    )
 
 
 def lap(in_field: Field[np.float64], out_field: Field[np.float64]):  # noqa
@@ -37,4 +43,5 @@ def lap(in_field: Field[np.float64], out_field: Field[np.float64]):  # noqa
 
 lap_numpy = gtscript.stencil(backend="numpy", definition=lap)  # noqa
 lap_gtx86 = gtscript.stencil(backend="gtx86", definition=lap)  # noqa
-lap_gtcuda = gtscript.stencil(backend="gtcuda", definition=lap)  # noqa
+if cp is not None:
+    lap_gtcuda = gtscript.stencil(backend="gtcuda", definition=lap)  # noqa
