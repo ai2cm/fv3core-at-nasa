@@ -26,10 +26,10 @@ RUN apt-get update -y &&\
 
 RUN apt-get update -y &&\
     apt install -y --no-install-recommends\
-    git\
-    gfortran\
     gcc-9\
     g++-9\
+    git\
+    gfortran\
     libmpich-dev \
     python \
     python3.8 \
