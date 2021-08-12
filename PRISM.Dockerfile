@@ -1,55 +1,81 @@
-FROM gitlab.nccs.nasa.gov:5050/nccs-ci/nccs-containers/base/ubuntu18
+# ===================================
+# Purpose: testing `fv3core` on GPU
+# Stack:
+#   - based on nvidia ubuntu18 image
+#   - gcc-9.3 (gt4py)
+#   - g++-9.3 (for boost & other built deps)
+#   - python-3.8 (fv3core, gt4py)
+#   - mpich-dev (latest from PPA)
+#   - Boost-1.70 (for serialbox & gt4py)
+#   - serialbox-2.6.0 (fv3core)
+#   - GT4Py git tag v30 (fv3core)
+#   - fv3gfts-util HEAD of master (fv3core)
+#   - fv3core HEAD of master (pip install in edit mode)
+# ===================================
 
-FROM nvcr.io/nvidia/cuda:11.2.0-base-ubuntu18.04
-
-FROM nvcr.io/nvidia/cuda:11.2.0-runtime-ubuntu18.04
+FROM nvcr.io/nvidia/cuda:11.2.0-devel-ubuntu18.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Git & mpich-dev
+# gcc, git, mpich-dev && python
+
+#GCC + ubuntu18.04
+RUN apt-get update -y &&\
+    apt install -y --no-install-recommends software-properties-common &&\
+    add-apt-repository ppa:ubuntu-toolchain-r/test
 
 RUN apt-get update -y &&\
     apt install -y --no-install-recommends\
     git\
     gfortran\
-    libmpich-dev
-
-# Python & common py packages
-
-RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends \
+    gcc-9\
+    g++-9\
+    libmpich-dev \
     python \
     python3.8 \
     python3.8-dev &&\
     rm -rf /var/lib/apt/lists/*
 
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.8.0
+# Fix python && gcc default bin to point to the version we need
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.8 60
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60
+RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 60
+RUN python --version
+RUN gcc --version
+RUN g++ --version
 
-RUN python -m ensurepip --upgrade
-RUN pip --no-cache-dir install --upgrade pip && \
-    pip --no-cache-dir install setuptools &&\
-    pip --no-cache-dir install wheel &&\
-    pip --no-cache-dir install kiwisolver numpy matplotlib cupy-cuda112 Cython h5py six zipp pytest pytest-profiling pytest-subtests  hypothesis gitpython clang-format gprof2dot cftime f90nml pandas pyparsing python-dateutil pytz pyyaml xarray zarr git+https://github.com/mpi4py/mpi4py.git@aac3d8f2a56f3d74a75ad32ac0554d63e7ef90ab
+#PIP
+# Get a random py3 pip then upgrade it to latest (same for setuptools & wheel)
+RUN apt-get update -y &&\
+    apt install -y --no-install-recommends\
+    python3-pip
+
+RUN python -m pip --no-cache-dir install --upgrade pip && \
+    python -m pip --no-cache-dir install setuptools &&\
+    python -m pip --no-cache-dir install wheel
+
+# Py default packages
+RUN python -m pip --no-cache-dir install kiwisolver numpy matplotlib cupy-cuda112 Cython h5py six zipp pytest pytest-profiling pytest-subtests  hypothesis gitpython clang-format gprof2dot cftime f90nml pandas pyparsing python-dateutil pytz pyyaml xarray zarr git+https://github.com/mpi4py/mpi4py.git@aac3d8f2a56f3d74a75ad32ac0554d63e7ef90ab
 
 # Boost version 1.76.0
 RUN apt-get update -y && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    apt-get install -y --no-install-recommends \
     bzip2 \
     libbz2-dev \
     tar \
     wget \
     zlib1g-dev && \
     rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /var/tmp && wget -q -nc --no-check-certificate -P /var/tmp https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.bz2 && \
-    mkdir -p /var/tmp && tar -x -f /var/tmp/boost_1_76_0.tar.bz2 -C /var/tmp -j && \
-    cd /var/tmp/boost_1_76_0 && ./bootstrap.sh --prefix=/usr/local/boost --without-libraries=python && \
+RUN mkdir -p /var/tmp && wget -q -nc --no-check-certificate -P /var/tmp https://boostorg.jfrog.io/artifactory/main/release/1.70.0/source/boost_1_70_0.tar.bz2 && \
+    mkdir -p /var/tmp && tar -x -f /var/tmp/boost_1_70_0.tar.bz2 -C /var/tmp -j && \
+    cd /var/tmp/boost_1_70_0 && ./bootstrap.sh --prefix=/usr/local/boost --without-libraries=python && \
     ./b2 -j$(nproc) -q install && \
-    rm -rf /var/tmp/boost_1_76_0.tar.bz2 /var/tmp/boost_1_76_0
+    rm -rf /var/tmp/boost_1_70_0.tar.bz2 /var/tmp/boost_1_70_0
 ENV LD_LIBRARY_PATH=/usr/local/boost/lib:$LD_LIBRARY_PATH
 
 # CMake version 3.18.3
 RUN apt-get update -y && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    apt-get install -y --no-install-recommends \
     make \
     wget && \
     rm -rf /var/lib/apt/lists/*
@@ -70,17 +96,22 @@ ENV PYTHONPATH=/usr/local/serialbox/python:$PYTHONPATH
 
 # gt4py
 
-RUN pip --no-cache-dir install git+https://github.com/VulcanClimateModeling/gt4py.git@v30
-
-RUN git clone --depth 1 -b release_v1.1         https://github.com/GridTools/gridtools.git         /usr/local/lib/python3.8/dist-packages/gt4py/_external_src/gridtools
+RUN python -m pip --no-cache-dir install git+https://github.com/VulcanClimateModeling/gt4py.git@v30
+RUN git clone --depth 1 -b release_v1.1 https://github.com/GridTools/gridtools.git /usr/local/lib/python3.8/dist-packages/gt4py/_external_src/gridtools
+ENV BOOST_ROOT /usr/local/boost
+ENV CUDA_HOME /usr/local/cuda
 
 # fv3gfs-util
 
-RUN git clone https://github.com/VulcanClimateModeling/fv3gfs-util.git && \
-    pip install -e fv3gfs-util
+RUN git clone https://github.com/VulcanClimateModeling/fv3gfs-util.git &&\
+    python -m pip install -e fv3gfs-util
 
 # fv3core
 
-RUN git clone https://github.com/VulcanClimateModeling/fv3core.git && \
-    pip install -e fv3core
+RUN git clone https://github.com/VulcanClimateModeling/fv3core.git &&\
+    python -m pip install -e fv3core
 
+
+# Check everything is running as expect
+COPY ./setup_check.py ./setup_check.py 
+RUN python ./setup_check.py 
