@@ -44,6 +44,15 @@ RUN python --version
 RUN gcc --version
 RUN g++ --version
 
+# Docker hard limits shared memory usage. MPICH for oversubscribed situation
+# uses shared mem for most of its comunication operations,
+# which leads to a sigbus crash.
+# Both of those (for version <3.2 and >3.2) will force mpich to go
+# through the network stack instead of using the shared nemory
+# The cost is a slower runtime
+ENV MPIR_CVAR_NOLOCAL=1
+ENV MPIR_CVAR_CH3_NOLOCAL=1
+
 #PIP
 # Get a random py3 pip then upgrade it to latest (same for setuptools & wheel)
 RUN apt-get update -y &&\
