@@ -23,7 +23,7 @@ ENV TMPDIR=/local_tmp
 
 # Linux tooling 
 RUN apt-get update -y &&\
-    apt install -y -no-install-recommends \
+    apt install -y --no-install-recommends\
     nano
 
 # gcc, git, mpich-dev && python
