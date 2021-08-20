@@ -17,9 +17,17 @@ FROM nvcr.io/nvidia/cuda:11.2.0-devel-ubuntu18.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# gcc, git, mpich-dev && python
+# Fix for NVCC
+RUN mkdir /local_tmp
+ENV TMPDIR=/local_tmp
 
-#GCC + ubuntu18.04
+# Linux tooling 
+RUN apt-get update -y &&\
+    apt install -y -no-install-recommends \
+    nano
+
+# gcc, git, mpich-dev && python
+# GCC + ubuntu18.04 ppa
 RUN apt-get update -y &&\
     apt install -y --no-install-recommends software-properties-common &&\
     add-apt-repository ppa:ubuntu-toolchain-r/test

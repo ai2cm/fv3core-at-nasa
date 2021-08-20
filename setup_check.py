@@ -10,8 +10,6 @@ except ImportError:
 
 import os
 
-print(os.getenv("BOOST_ROOT"))
-
 dtype = np.float64
 
 np_a = gt4py.storage.ones(
