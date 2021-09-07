@@ -27,16 +27,18 @@ RUN apt-get update -y &&\
 
 # gcc, git, mpich-dev && python
 # GCC + ubuntu18.04 ppa
-RUN apt-get update -y &&\
-    apt install -y --no-install-recommends software-properties-common &&\
+RUN apt-get update -y && \
+    apt install -y --no-install-recommends software-properties-common && \
     add-apt-repository ppa:ubuntu-toolchain-r/test
 
-RUN apt-get update -y &&\
-    apt install -y --no-install-recommends\
-    gcc-9\
-    g++-9\
-    git\
-    gfortran\
+RUN apt-get update -y && \
+    apt install -y --no-install-recommends \
+    gcc-9 \
+    g++-9 \
+    git \
+    gfortran \
+    openmpi-bin \
+    libopenmpi-dev \
     mpich \
     libmpich-dev \
     python \
