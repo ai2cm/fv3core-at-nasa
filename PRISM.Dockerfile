@@ -11,15 +11,14 @@
 #   - GT4Py git tag v30 (fv3core)
 #   - fv3gfts-util HEAD of master (fv3core)
 #   - fv3core HEAD of master (pip install in edit mode)
+# Tools & configuration
+#   - nano
+#   - TMPDIR > /local_tmp
 # ===================================
 
 FROM nvcr.io/nvidia/cuda:11.2.0-devel-ubuntu18.04
 
 ENV DEBIAN_FRONTEND=noninteractive
-
-# Fix for NVCC
-RUN mkdir /local_tmp
-ENV TMPDIR=/local_tmp
 
 # Linux tooling 
 RUN apt-get update -y &&\
@@ -38,6 +37,7 @@ RUN apt-get update -y &&\
     g++-9\
     git\
     gfortran\
+    mpich \
     libmpich-dev \
     python \
     python3.8 \
@@ -128,6 +128,11 @@ RUN git clone https://github.com/VulcanClimateModeling/fv3gfs-util.git &&\
 RUN git clone https://github.com/VulcanClimateModeling/fv3core.git &&\
     python -m pip install -e fv3core
 
+
+# Move tmp to a bind point
+RUN mkdir /mnt/tmp
+ENV TMPDIR=/mnt/tmp
+RUN mkdir /mnt/data
 
 # Check everything is running as expect
 COPY ./setup_check.py ./setup_check.py 

@@ -8,8 +8,6 @@ try:
 except ImportError:
     cp = None
 
-import os
-
 dtype = np.float64
 
 np_a = gt4py.storage.ones(
