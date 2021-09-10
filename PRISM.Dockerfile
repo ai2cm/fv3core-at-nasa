@@ -71,9 +71,6 @@ ENV PATH=$MPICH_DIR/bin:$PATH
 ENV LD_LIBRARY_PATH=$MPICH_DIR/lib:$LD_LIBRARY_PATH
 ENV MANPATH=$MPICH_DIR/share/man:$MANPATH
 
-# Get mpitest compiled
-RUN cd /opt && mpicc -o mpitest mpitest.c
-
 # Docker hard limits shared memory usage. MPICH for oversubscribed situation
 # uses shared mem for most of its comunication operations,
 # which leads to a sigbus crash.
