@@ -23,7 +23,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Linux tooling 
 RUN apt-get update -y &&\
     apt install -y --no-install-recommends\
-    nano
+    nano \
+    tar \
+    wget
 
 # gcc, git, && python
 # GCC + ubuntu18.04 ppa
@@ -99,8 +101,6 @@ RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
     bzip2 \
     libbz2-dev \
-    tar \
-    wget \
     zlib1g-dev && \
     rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /var/tmp && wget -q -nc --no-check-certificate -P /var/tmp https://boostorg.jfrog.io/artifactory/main/release/1.70.0/source/boost_1_70_0.tar.bz2 && \
