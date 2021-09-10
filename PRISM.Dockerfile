@@ -25,7 +25,7 @@ RUN apt-get update -y &&\
     apt install -y --no-install-recommends\
     nano
 
-# gcc, git, mpich-dev && python
+# gcc, git, && python
 # GCC + ubuntu18.04 ppa
 RUN apt-get update -y && \
     apt install -y --no-install-recommends software-properties-common && \
@@ -37,10 +37,6 @@ RUN apt-get update -y && \
     g++-9 \
     git \
     gfortran \
-    openmpi-bin \
-    libopenmpi-dev \
-    mpich \
-    libmpich-dev \
     python \
     python3.8 \
     python3.8-dev &&\
@@ -53,6 +49,21 @@ RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 60
 RUN python --version
 RUN gcc --version
 RUN g++ --version
+
+# MPICH
+ENV MPICH_VERSION=3.3
+ENV MPICH_URL="http://www.mpich.org/static/downloads/$MPICH_VERSION/mpich-$MPICH_VERSION.tar.gz"
+ENV MPICH_DIR=/opt/mpich
+
+RUN mkdir -p /tmp/mpich
+RUN mkdir -p /opt
+RUN cd /tmp/mpich/mpich-$MPICH_VERSION && ./configure --prefix=$MPICH_DIR && make install
+
+ENV PATH=$MPICH_DIR/bin:$PATH
+ENV LD_LIBRARY_PATH=$MPICH_DIR/lib:$LD_LIBRARY_PATH
+ENV MANPATH=$MPICH_DIR/share/man:$MANPATH
+
+RUN cd /opt && mpicc -o mpitest mpitest.c
 
 # Docker hard limits shared memory usage. MPICH for oversubscribed situation
 # uses shared mem for most of its comunication operations,
