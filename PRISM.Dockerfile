@@ -96,7 +96,7 @@ ENV OPENMPI_DIR=/opt/openmpi
 RUN mkdir -p /tmp/openmpi
 RUN mkdir -p /opt
 RUN cd /tmp/openmpi && wget -O mpich-$OPENMPI_VERSION.tar.gz $OPENMPI_URL && tar xzf mpich-$OPENMPI_VERSION.tar.gz
-RUN cd /tmp/openmpi/openmpi-$OPENMPI_URL \
+RUN cd /tmp/openmpi/openmpi-$OPENMPI_VERSION \
     && ./configure \
     --with-cuda=/usr/local/cuda \
     --prefix=$OPENMPI_DIR \
