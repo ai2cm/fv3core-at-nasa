@@ -53,40 +53,57 @@ RUN gcc --version
 RUN g++ --version
 
 # MPICH
-ENV MPICH_VERSION=3.3
-ENV MPICH_URL="http://www.mpich.org/static/downloads/$MPICH_VERSION/mpich-$MPICH_VERSION.tar.gz"
-ENV MPICH_DIR=/opt/mpich
-
-RUN mkdir -p /tmp/mpich
-RUN mkdir -p /opt
-
-# download
-RUN cd /tmp/mpich && wget -O mpich-$MPICH_VERSION.tar.gz $MPICH_URL && tar xzf mpich-$MPICH_VERSION.tar.gz
-
-# conf & make
-RUN cd /tmp/mpich/mpich-$MPICH_VERSION \
-    && ./configure \
-    --with-cuda=/usr/local/cuda \
-    --enable-shared \
-    --prefix=$MPICH_DIR \
-    && make install
-
-# setup env var for LD & path
-ENV PATH=$MPICH_DIR/bin:$PATH
-ENV LD_LIBRARY_PATH=$MPICH_DIR/lib:$LD_LIBRARY_PATH
-ENV MANPATH=$MPICH_DIR/share/man:$MANPATH
-
-# We need to create a symlink to the extended lib name (This is probably a bug...)
-RUN ln -s /opt/mpich/lib/libmpich.so /opt/mpich/lib/libmpich.so.0
-
+#ENV MPICH_VERSION=3.3
+#ENV MPICH_URL="http://www.mpich.org/static/downloads/$MPICH_VERSION/mpich-$MPICH_VERSION.tar.gz"
+#ENV MPICH_DIR=/opt/mpich
+#
+#RUN mkdir -p /tmp/mpich
+#RUN mkdir -p /opt
+#
+## download
+#RUN cd /tmp/mpich && wget -O mpich-$MPICH_VERSION.tar.gz $MPICH_URL && tar xzf mpich-$MPICH_VERSION.tar.gz
+#
+## conf & make
+#RUN cd /tmp/mpich/mpich-$MPICH_VERSION \
+#    && ./configure \
+#    --with-cuda=/usr/local/cuda \
+#    --enable-shared \
+#    --prefix=$MPICH_DIR \
+#    && make install
+#
+## setup env var for LD & path
+#ENV PATH=$MPICH_DIR/bin:$PATH
+#ENV LD_LIBRARY_PATH=$MPICH_DIR/lib:$LD_LIBRARY_PATH
+#ENV MANPATH=$MPICH_DIR/share/man:$MANPATH
+#
+## We need to create a symlink to the extended lib name (This is probably a bug...)
+#RUN ln -s /opt/mpich/lib/libmpich.so /opt/mpich/lib/libmpich.so.0
 # Docker hard limits shared memory usage. MPICH for oversubscribed situation
 # uses shared mem for most of its comunication operations,
 # which leads to a sigbus crash.
 # Both of those (for version <3.2 and >3.2) will force mpich to go
 # through the network stack instead of using the shared nemory
 # The cost is a slower runtime
-ENV MPIR_CVAR_NOLOCAL=1
-ENV MPIR_CVAR_CH3_NOLOCAL=1
+# ENV MPIR_CVAR_NOLOCAL=1
+# ENV MPIR_CVAR_CH3_NOLOCAL=1
+
+# OpenMPI
+
+ENV OPENMPI_VERSION=4.1.1
+ENV OPENMPI_URL="https://www.open-mpi.org//software/ompi/v3.0/downloads/openmpi-$OPENMPI_VERSION.tar.gz"
+ENV OPENMPI_DIR=/opt/openmpi
+RUN mkdir -p /tmp/openmpi
+RUN mkdir -p /opt
+RUN cd /tmp/openmpi && wget -O mpich-$OPENMPI_VERSION.tar.gz $OPENMPI_URL && tar xzf mpich-$OPENMPI_VERSION.tar.gz
+RUN cd /tmp/openmpi/openmpi-$OPENMPI_URL \
+    && ./configure \
+    --with-cuda=/usr/local/cuda \
+    --prefix=$OPENMPI_DIR \
+    && make all install
+
+ENV PATH=$OPENMPI_DIR/bin:$PATH
+ENV LD_LIBRARY_PATH=$OPENMPI_DIR/lib:$LD_LIBRARY_PATH
+ENV MANPATH=$OPENMPI_DIR/share/man:$MANPATH
 
 #PIP
 # Get a random py3 pip then upgrade it to latest (same for setuptools & wheel)
