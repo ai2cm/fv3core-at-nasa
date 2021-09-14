@@ -64,12 +64,15 @@ RUN mkdir -p /opt
 RUN cd /tmp/mpich && wget -O mpich-$MPICH_VERSION.tar.gz $MPICH_URL && tar xzf mpich-$MPICH_VERSION.tar.gz
 
 # conf & make
-RUN cd /tmp/mpich/mpich-$MPICH_VERSION && ./configure --prefix=$MPICH_DIR && make install
+RUN cd /tmp/mpich/mpich-$MPICH_VERSION && ./configure --enable-shared --with-cuda --prefix=$MPICH_DIR && make install
 
 # setup env var for LD & path
 ENV PATH=$MPICH_DIR/bin:$PATH
 ENV LD_LIBRARY_PATH=$MPICH_DIR/lib:$LD_LIBRARY_PATH
 ENV MANPATH=$MPICH_DIR/share/man:$MANPATH
+
+# We need to create a symlink to the extended lib name (This is probably a bug...)
+RUN ln -s /opt/mpich/lib/libmpich.so /opt/mpich/lib/libmpich.so.0
 
 # Docker hard limits shared memory usage. MPICH for oversubscribed situation
 # uses shared mem for most of its comunication operations,
