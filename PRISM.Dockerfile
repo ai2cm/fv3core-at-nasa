@@ -53,7 +53,7 @@ RUN gcc --version
 RUN g++ --version
 
 # MPICH
-ENV MPICH_VERSION=3.4
+ENV MPICH_VERSION=3.3
 ENV MPICH_URL="http://www.mpich.org/static/downloads/$MPICH_VERSION/mpich-$MPICH_VERSION.tar.gz"
 ENV MPICH_DIR=/opt/mpich
 
@@ -69,7 +69,6 @@ RUN cd /tmp/mpich/mpich-$MPICH_VERSION && \
     --with-cuda=/usr/local/cuda \
     --enable-shared \
     --prefix=$MPICH_DIR \
-    --with-device=ch3 && \
     make install
 
 # setup env var for LD & path
