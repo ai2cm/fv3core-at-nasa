@@ -64,7 +64,13 @@ RUN mkdir -p /opt
 RUN cd /tmp/mpich && wget -O mpich-$MPICH_VERSION.tar.gz $MPICH_URL && tar xzf mpich-$MPICH_VERSION.tar.gz
 
 # conf & make
-RUN cd /tmp/mpich/mpich-$MPICH_VERSION && ./configure --enable-shared --with-cuda=/usr/local/cuda --prefix=$MPICH_DIR && make install
+RUN cd /tmp/mpich/mpich-$MPICH_VERSION && \
+    ./configure \
+    --with-cuda=/usr/local/cuda \
+    --enable-shared \
+    --prefix=$MPICH_DIR \
+    --with-device=ch3 && \
+    make install
 
 # setup env var for LD & path
 ENV PATH=$MPICH_DIR/bin:$PATH
