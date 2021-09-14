@@ -89,8 +89,9 @@ RUN g++ --version
 
 # OpenMPI
 
+ENV OPENMPI_MAJOR_VERSION=4.1
 ENV OPENMPI_VERSION=4.1.1
-ENV OPENMPI_URL="https://www.open-mpi.org//software/ompi/v3.0/downloads/openmpi-$OPENMPI_VERSION.tar.gz"
+ENV OPENMPI_URL="https://download.open-mpi.org/release/open-mpi/v$OPENMPI_MAJOR_VERSION/openmpi-$OPENMPI_VERSION.tar.gz"
 ENV OPENMPI_DIR=/opt/openmpi
 RUN mkdir -p /tmp/openmpi
 RUN mkdir -p /opt
