@@ -21,6 +21,8 @@ FROM nvcr.io/nvidia/cuda:11.2.0-devel-ubuntu18.04 AS devel
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+RUN printf "Acquire::http::Pipeline-Depth 0;\nAcquire::http::No-Cache true;\nAcquire::BrokenProxy true;" > /etc/apt/apt.conf.d/99fixbadproxy
+
 # GNU compiler
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
