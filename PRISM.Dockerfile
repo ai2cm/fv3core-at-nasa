@@ -5,7 +5,8 @@
 #   - gcc-9.3 (gt4py)
 #   - g++-9.3 (for boost & other built deps)
 #   - python-3.8 (fv3core, gt4py)
-#   - mpich-dev (latest from PPA)
+#   - mpich-dev (from source)
+#   - openmpi (from source, hidden dependancy on ssh)
 #   - Boost-1.70 (for serialbox & gt4py)
 #   - serialbox-2.6.0 (fv3core)
 #   - GT4Py git tag v30 (fv3core)
@@ -16,9 +17,507 @@
 #   - TMPDIR > /local_tmp
 # ===================================
 
-FROM nvcr.io/nvidia/cuda:11.2.0-devel-ubuntu18.04
+FROM nvcr.io/nvidia/cuda:11.2.0-devel-ubuntu18.04 AS devel
 
 ENV DEBIAN_FRONTEND=noninteractive
+
+# GNU compiler
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    g++ \
+    gcc \
+    gfortran && \
+    rm -rf /var/lib/apt/lists/*
+
+# GDRCOPY version 2.2
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    make \
+    wget && \
+    rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /var/tmp && wget -q -nc --no-check-certificate -P /var/tmp https://github.com/NVIDIA/gdrcopy/archive/v2.2.tar.gz && \
+    mkdir -p /var/tmp && tar -x -f /var/tmp/v2.2.tar.gz -C /var/tmp -z && \
+    cd /var/tmp/gdrcopy-2.2 && \
+    mkdir -p /usr/local/gdrcopy/include /usr/local/gdrcopy/lib && \
+    make prefix=/usr/local/gdrcopy lib lib_install && \
+    echo "/usr/local/gdrcopy/lib" >> /etc/ld.so.conf.d/hpccm.conf && ldconfig && \
+    rm -rf /var/tmp/gdrcopy-2.2 /var/tmp/v2.2.tar.gz
+ENV CPATH=/usr/local/gdrcopy/include:$CPATH \
+    LIBRARY_PATH=/usr/local/gdrcopy/lib:$LIBRARY_PATH
+
+# KNEM version 1.1.4
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    git && \
+    rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /var/tmp && cd /var/tmp && git clone --depth=1 --branch knem-1.1.4 https://gitlab.inria.fr/knem/knem.git knem && cd - && \
+    mkdir -p /usr/local/knem && \
+    cd /var/tmp/knem && \
+    mkdir -p /usr/local/knem/include && \
+    cp common/*.h /usr/local/knem/include && \
+    echo "/usr/local/knem/lib" >> /etc/ld.so.conf.d/hpccm.conf && ldconfig && \
+    rm -rf /var/tmp/knem
+ENV CPATH=/usr/local/knem/include:$CPATH
+
+# # Mellanox OFED version 4.2-1.5.1.0
+# RUN apt-get update -y && \
+#     apt-get install -y --no-install-recommends \
+#     ca-certificates \
+#     gnupg \
+#     libnl-3-200 \
+#     libnl-route-3-200 \
+#     libnuma1 \
+#     wget && \
+#     rm -rf /var/lib/apt/lists/*
+# RUN wget -qO - https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox | apt-key add - && \
+#     mkdir -p /etc/apt/sources.list.d && wget -q -nc --no-check-certificate -P /etc/apt/sources.list.d https://linux.mellanox.com/public/repo/mlnx_ofed/4.2-1.5.1.0/ubuntu18.04/mellanox_mlnx_ofed.list && \
+#     apt-get update -y && \
+#     mkdir -m 777 -p /var/tmp/packages_download && cd /var/tmp/packages_download && \
+#     apt-get download -y --no-install-recommends \
+#     ibverbs-utils \
+#     libibmad \
+#     libibmad-devel \
+#     libibumad \
+#     libibumad-devel \
+#     libibverbs-dev \
+#     libibverbs1 \
+#     libmlx4-1 \
+#     libmlx4-dev \
+#     libmlx5-1 \
+#     libmlx5-dev \
+#     librdmacm-dev \
+#     librdmacm1 && \
+#     mkdir -p /usr/local/ofed/4.2-1.5.1.0 && \
+#     find /var/tmp/packages_download -regextype posix-extended -type f -regex "/var/tmp/packages_download/(ibverbs-utils|libibmad|libibmad-devel|libibumad|libibumad-devel|libibverbs-dev|libibverbs1|libmlx4-1|libmlx4-dev|libmlx5-1|libmlx5-dev|librdmacm-dev|librdmacm1).*deb" -exec dpkg --extract {} /usr/local/ofed/4.2-1.5.1.0 \; && \
+#     rm -rf /var/tmp/packages_download && \
+#     rm -f /etc/apt/sources.list.d/mellanox_mlnx_ofed.list && \
+#     rm -rf /var/lib/apt/lists/*
+# RUN mkdir -p /etc/libibverbs.d
+# # Mellanox OFED version 4.3-1.0.1.0
+# RUN apt-get update -y && \
+#     apt-get install -y --no-install-recommends \
+#     ca-certificates \
+#     gnupg \
+#     libnl-3-200 \
+#     libnl-route-3-200 \
+#     libnuma1 \
+#     wget && \
+#     rm -rf /var/lib/apt/lists/*
+# RUN wget -qO - https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox | apt-key add - && \
+#     mkdir -p /etc/apt/sources.list.d && wget -q -nc --no-check-certificate -P /etc/apt/sources.list.d https://linux.mellanox.com/public/repo/mlnx_ofed/4.3-1.0.1.0/ubuntu18.04/mellanox_mlnx_ofed.list && \
+#     apt-get update -y && \
+#     mkdir -m 777 -p /var/tmp/packages_download && cd /var/tmp/packages_download && \
+#     apt-get download -y --no-install-recommends \
+#     ibverbs-utils \
+#     libibmad \
+#     libibmad-devel \
+#     libibumad \
+#     libibumad-devel \
+#     libibverbs-dev \
+#     libibverbs1 \
+#     libmlx4-1 \
+#     libmlx4-dev \
+#     libmlx5-1 \
+#     libmlx5-dev \
+#     librdmacm-dev \
+#     librdmacm1 && \
+#     mkdir -p /usr/local/ofed/4.3-1.0.1.0 && \
+#     find /var/tmp/packages_download -regextype posix-extended -type f -regex "/var/tmp/packages_download/(ibverbs-utils|libibmad|libibmad-devel|libibumad|libibumad-devel|libibverbs-dev|libibverbs1|libmlx4-1|libmlx4-dev|libmlx5-1|libmlx5-dev|librdmacm-dev|librdmacm1).*deb" -exec dpkg --extract {} /usr/local/ofed/4.3-1.0.1.0 \; && \
+#     rm -rf /var/tmp/packages_download && \
+#     rm -f /etc/apt/sources.list.d/mellanox_mlnx_ofed.list && \
+#     rm -rf /var/lib/apt/lists/*
+# RUN mkdir -p /etc/libibverbs.d
+# # Mellanox OFED version 4.4-1.0.0.0
+# RUN apt-get update -y && \
+#     apt-get install -y --no-install-recommends \
+#     ca-certificates \
+#     gnupg \
+#     libnl-3-200 \
+#     libnl-route-3-200 \
+#     libnuma1 \
+#     wget && \
+#     rm -rf /var/lib/apt/lists/*
+# RUN wget -qO - https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox | apt-key add - && \
+#     mkdir -p /etc/apt/sources.list.d && wget -q -nc --no-check-certificate -P /etc/apt/sources.list.d https://linux.mellanox.com/public/repo/mlnx_ofed/4.4-1.0.0.0/ubuntu18.04/mellanox_mlnx_ofed.list && \
+#     apt-get update -y && \
+#     mkdir -m 777 -p /var/tmp/packages_download && cd /var/tmp/packages_download && \
+#     apt-get download -y --no-install-recommends \
+#     ibverbs-utils \
+#     libibmad \
+#     libibmad-devel \
+#     libibumad \
+#     libibumad-devel \
+#     libibverbs-dev \
+#     libibverbs1 \
+#     libmlx4-1 \
+#     libmlx4-dev \
+#     libmlx5-1 \
+#     libmlx5-dev \
+#     librdmacm-dev \
+#     librdmacm1 && \
+#     mkdir -p /usr/local/ofed/4.4-1.0.0.0 && \
+#     find /var/tmp/packages_download -regextype posix-extended -type f -regex "/var/tmp/packages_download/(ibverbs-utils|libibmad|libibmad-devel|libibumad|libibumad-devel|libibverbs-dev|libibverbs1|libmlx4-1|libmlx4-dev|libmlx5-1|libmlx5-dev|librdmacm-dev|librdmacm1).*deb" -exec dpkg --extract {} /usr/local/ofed/4.4-1.0.0.0 \; && \
+#     rm -rf /var/tmp/packages_download && \
+#     rm -f /etc/apt/sources.list.d/mellanox_mlnx_ofed.list && \
+#     rm -rf /var/lib/apt/lists/*
+# RUN mkdir -p /etc/libibverbs.d
+# # Mellanox OFED version 4.5-1.0.1.0
+# RUN apt-get update -y && \
+#     apt-get install -y --no-install-recommends \
+#     ca-certificates \
+#     gnupg \
+#     libnl-3-200 \
+#     libnl-route-3-200 \
+#     libnuma1 \
+#     wget && \
+#     rm -rf /var/lib/apt/lists/*
+# RUN wget -qO - https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox | apt-key add - && \
+#     mkdir -p /etc/apt/sources.list.d && wget -q -nc --no-check-certificate -P /etc/apt/sources.list.d https://linux.mellanox.com/public/repo/mlnx_ofed/4.5-1.0.1.0/ubuntu18.04/mellanox_mlnx_ofed.list && \
+#     apt-get update -y && \
+#     mkdir -m 777 -p /var/tmp/packages_download && cd /var/tmp/packages_download && \
+#     apt-get download -y --no-install-recommends \
+#     ibverbs-utils \
+#     libibmad \
+#     libibmad-devel \
+#     libibumad \
+#     libibumad-devel \
+#     libibverbs-dev \
+#     libibverbs1 \
+#     libmlx4-1 \
+#     libmlx4-dev \
+#     libmlx5-1 \
+#     libmlx5-dev \
+#     librdmacm-dev \
+#     librdmacm1 && \
+#     mkdir -p /usr/local/ofed/4.5-1.0.1.0 && \
+#     find /var/tmp/packages_download -regextype posix-extended -type f -regex "/var/tmp/packages_download/(ibverbs-utils|libibmad|libibmad-devel|libibumad|libibumad-devel|libibverbs-dev|libibverbs1|libmlx4-1|libmlx4-dev|libmlx5-1|libmlx5-dev|librdmacm-dev|librdmacm1).*deb" -exec dpkg --extract {} /usr/local/ofed/4.5-1.0.1.0 \; && \
+#     rm -rf /var/tmp/packages_download && \
+#     rm -f /etc/apt/sources.list.d/mellanox_mlnx_ofed.list && \
+#     rm -rf /var/lib/apt/lists/*
+# RUN mkdir -p /etc/libibverbs.d
+#Mellanox OFED version 4.6-1.0.1.1
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    gnupg \
+    libnl-3-200 \
+    libnl-route-3-200 \
+    libnuma1 \
+    wget && \
+    rm -rf /var/lib/apt/lists/*
+RUN wget -qO - https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox | apt-key add - && \
+    mkdir -p /etc/apt/sources.list.d && wget -q -nc --no-check-certificate -P /etc/apt/sources.list.d https://linux.mellanox.com/public/repo/mlnx_ofed/4.6-1.0.1.1/ubuntu18.04/mellanox_mlnx_ofed.list && \
+    apt-get update -y && \
+    mkdir -m 777 -p /var/tmp/packages_download && cd /var/tmp/packages_download && \
+    apt-get download -y --no-install-recommends \
+    ibverbs-utils \
+    libibmad \
+    libibmad-devel \
+    libibumad \
+    libibumad-devel \
+    libibverbs-dev \
+    libibverbs1 \
+    libmlx4-1 \
+    libmlx4-dev \
+    libmlx5-1 \
+    libmlx5-dev \
+    librdmacm-dev \
+    librdmacm1 && \
+    mkdir -p /usr/local/ofed/4.6-1.0.1.1 && \
+    find /var/tmp/packages_download -regextype posix-extended -type f -regex "/var/tmp/packages_download/(ibverbs-utils|libibmad|libibmad-devel|libibumad|libibumad-devel|libibverbs-dev|libibverbs1|libmlx4-1|libmlx4-dev|libmlx5-1|libmlx5-dev|librdmacm-dev|librdmacm1).*deb" -exec dpkg --extract {} /usr/local/ofed/4.6-1.0.1.1 \; && \
+    rm -rf /var/tmp/packages_download && \
+    rm -f /etc/apt/sources.list.d/mellanox_mlnx_ofed.list && \
+    rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /etc/libibverbs.d
+# # Mellanox OFED version 4.7-3.2.9.0
+# RUN apt-get update -y && \
+#     apt-get install -y --no-install-recommends \
+#     ca-certificates \
+#     gnupg \
+#     libnl-3-200 \
+#     libnl-route-3-200 \
+#     libnuma1 \
+#     wget && \
+#     rm -rf /var/lib/apt/lists/*
+# RUN wget -qO - https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox | apt-key add - && \
+#     mkdir -p /etc/apt/sources.list.d && wget -q -nc --no-check-certificate -P /etc/apt/sources.list.d https://linux.mellanox.com/public/repo/mlnx_ofed/4.7-3.2.9.0/ubuntu18.04/mellanox_mlnx_ofed.list && \
+#     apt-get update -y && \
+#     mkdir -m 777 -p /var/tmp/packages_download && cd /var/tmp/packages_download && \
+#     apt-get download -y --no-install-recommends \
+#     ibverbs-utils \
+#     libibmad \
+#     libibmad-devel \
+#     libibumad \
+#     libibumad-devel \
+#     libibverbs-dev \
+#     libibverbs1 \
+#     libmlx4-1 \
+#     libmlx4-dev \
+#     libmlx5-1 \
+#     libmlx5-dev \
+#     librdmacm-dev \
+#     librdmacm1 && \
+#     mkdir -p /usr/local/ofed/4.7-3.2.9.0 && \
+#     find /var/tmp/packages_download -regextype posix-extended -type f -regex "/var/tmp/packages_download/(ibverbs-utils|libibmad|libibmad-devel|libibumad|libibumad-devel|libibverbs-dev|libibverbs1|libmlx4-1|libmlx4-dev|libmlx5-1|libmlx5-dev|librdmacm-dev|librdmacm1).*deb" -exec dpkg --extract {} /usr/local/ofed/4.7-3.2.9.0 \; && \
+#     rm -rf /var/tmp/packages_download && \
+#     rm -f /etc/apt/sources.list.d/mellanox_mlnx_ofed.list && \
+#     rm -rf /var/lib/apt/lists/*
+# RUN mkdir -p /etc/libibverbs.d
+# # Mellanox OFED version 4.9-0.1.7.0
+# RUN apt-get update -y && \
+#     apt-get install -y --no-install-recommends \
+#     ca-certificates \
+#     gnupg \
+#     libnl-3-200 \
+#     libnl-route-3-200 \
+#     libnuma1 \
+#     wget && \
+#     rm -rf /var/lib/apt/lists/*
+# RUN wget -qO - https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox | apt-key add - && \
+#     mkdir -p /etc/apt/sources.list.d && wget -q -nc --no-check-certificate -P /etc/apt/sources.list.d https://linux.mellanox.com/public/repo/mlnx_ofed/4.9-0.1.7.0/ubuntu18.04/mellanox_mlnx_ofed.list && \
+#     apt-get update -y && \
+#     mkdir -m 777 -p /var/tmp/packages_download && cd /var/tmp/packages_download && \
+#     apt-get download -y --no-install-recommends \
+#     ibverbs-utils \
+#     libibmad \
+#     libibmad-devel \
+#     libibumad \
+#     libibumad-devel \
+#     libibverbs-dev \
+#     libibverbs1 \
+#     libmlx4-1 \
+#     libmlx4-dev \
+#     libmlx5-1 \
+#     libmlx5-dev \
+#     librdmacm-dev \
+#     librdmacm1 && \
+#     mkdir -p /usr/local/ofed/4.9-0.1.7.0 && \
+#     find /var/tmp/packages_download -regextype posix-extended -type f -regex "/var/tmp/packages_download/(ibverbs-utils|libibmad|libibmad-devel|libibumad|libibumad-devel|libibverbs-dev|libibverbs1|libmlx4-1|libmlx4-dev|libmlx5-1|libmlx5-dev|librdmacm-dev|librdmacm1).*deb" -exec dpkg --extract {} /usr/local/ofed/4.9-0.1.7.0 \; && \
+#     rm -rf /var/tmp/packages_download && \
+#     rm -f /etc/apt/sources.list.d/mellanox_mlnx_ofed.list && \
+#     rm -rf /var/lib/apt/lists/*
+# RUN mkdir -p /etc/libibverbs.d
+
+# Mellanox OFED version 5.2-2.2.0.0
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    gnupg \
+    wget && \
+    rm -rf /var/lib/apt/lists/*
+RUN wget -qO - https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox | apt-key add - && \
+    mkdir -p /etc/apt/sources.list.d && wget -q -nc --no-check-certificate -P /etc/apt/sources.list.d https://linux.mellanox.com/public/repo/mlnx_ofed/5.2-2.2.0.0/ubuntu18.04/mellanox_mlnx_ofed.list && \
+    apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    ibverbs-providers \
+    ibverbs-utils \
+    libibmad-dev \
+    libibmad5 \
+    libibumad-dev \
+    libibumad3 \
+    libibverbs-dev \
+    libibverbs1 \
+    librdmacm-dev \
+    librdmacm1 && \
+    rm -rf /var/lib/apt/lists/*
+
+# UCX version 1.10.0
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    binutils-dev \
+    file \
+    libnuma-dev \
+    make \
+    wget && \
+    rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /var/tmp && wget -q -nc --no-check-certificate -P /var/tmp https://github.com/openucx/ucx/releases/download/v1.10.0/ucx-1.10.0.tar.gz && \
+    mkdir -p /var/tmp && tar -x -f /var/tmp/ucx-1.10.0.tar.gz -C /var/tmp -z && \
+    cd /var/tmp/ucx-1.10.0 &&   ./configure --prefix=/usr/local/ucx --disable-assertions --disable-debug --disable-doxygen-doc --disable-logging --disable-params-check --disable-static --enable-mt --enable-optimizations --with-cuda=/usr/local/cuda --with-gdrcopy=/usr/local/gdrcopy --with-knem=/usr/local/knem && \
+    make -j$(nproc) && \
+    make -j$(nproc) install && \
+    rm -rf /var/tmp/ucx-1.10.0 /var/tmp/ucx-1.10.0.tar.gz
+ENV CPATH=/usr/local/ucx/include:$CPATH \
+    LD_LIBRARY_PATH=/usr/local/ucx/lib:$LD_LIBRARY_PATH \
+    LIBRARY_PATH=/usr/local/ucx/lib:$LIBRARY_PATH \
+    PATH=/usr/local/ucx/bin:$PATH
+
+# UCX version 1.10.0
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    binutils-dev \
+    file \
+    libnuma-dev \
+    make \
+    wget && \
+    rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /var/tmp && wget -q -nc --no-check-certificate -P /var/tmp https://github.com/openucx/ucx/releases/download/v1.10.0/ucx-1.10.0.tar.gz && \
+    mkdir -p /var/tmp && tar -x -f /var/tmp/ucx-1.10.0.tar.gz -C /var/tmp -z && \
+    cd /var/tmp/ucx-1.10.0 &&  LD_LIBRARY_PATH=/usr/local/ofed/4.6-1.0.1.1/lib:${LD_LIBRARY_PATH} ./configure --prefix=/usr/local/ucx-mlnx-legacy --disable-assertions --disable-debug --disable-doxygen-doc --disable-logging --disable-params-check --disable-static --enable-mt --enable-optimizations --with-cuda=/usr/local/cuda --with-gdrcopy=/usr/local/gdrcopy --with-knem=/usr/local/knem --with-rdmacm=/usr/local/ofed/4.6-1.0.1.1/usr --with-verbs=/usr/local/ofed/4.6-1.0.1.1/usr && \
+    make -j$(nproc) && \
+    make -j$(nproc) install && \
+    rm -rf /var/tmp/ucx-1.10.0 /var/tmp/ucx-1.10.0.tar.gz
+
+# RUN ln -s /usr/local/ucx-mlnx-legacy/bin/* /usr/local/ofed/4.2-1.5.1.0/usr/bin && \
+#     ln -s /usr/local/ucx-mlnx-legacy/lib/* /usr/local/ofed/4.2-1.5.1.0/usr/lib && \
+#     ln -s /usr/local/ucx-mlnx-legacy/bin/* /usr/local/ofed/4.3-1.0.1.0/usr/bin && \
+#     ln -s /usr/local/ucx-mlnx-legacy/lib/* /usr/local/ofed/4.3-1.0.1.0/usr/lib && \
+#     ln -s /usr/local/ucx-mlnx-legacy/bin/* /usr/local/ofed/4.4-1.0.0.0/usr/bin && \
+#     ln -s /usr/local/ucx-mlnx-legacy/lib/* /usr/local/ofed/4.4-1.0.0.0/usr/lib && \
+#     ln -s /usr/local/ucx-mlnx-legacy/bin/* /usr/local/ofed/4.5-1.0.1.0/usr/bin && \
+#     ln -s /usr/local/ucx-mlnx-legacy/lib/* /usr/local/ofed/4.5-1.0.1.0/usr/lib && \
+RUN   ln -s /usr/local/ucx-mlnx-legacy/bin/* /usr/local/ofed/4.6-1.0.1.1/usr/bin && \
+    ln -s /usr/local/ucx-mlnx-legacy/lib/* /usr/local/ofed/4.6-1.0.1.1/usr/lib
+#     ln -s /usr/local/ucx-mlnx-legacy/bin/* /usr/local/ofed/4.7-3.2.9.0/usr/bin && \
+#     ln -s /usr/local/ucx-mlnx-legacy/lib/* /usr/local/ofed/4.7-3.2.9.0/usr/lib && \
+#     ln -s /usr/local/ucx-mlnx-legacy/bin/* /usr/local/ofed/4.9-0.1.7.0/usr/bin && \
+#     ln -s /usr/local/ucx-mlnx-legacy/lib/* /usr/local/ofed/4.9-0.1.7.0/usr/lib
+
+# SLURM PMI2 version 20.11.7
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    bzip2 \
+    file \
+    make \
+    perl \
+    tar \
+    wget && \
+    rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /var/tmp && wget -q -nc --no-check-certificate -P /var/tmp https://download.schedmd.com/slurm/slurm-20.11.7.tar.bz2 && \
+    mkdir -p /var/tmp && tar -x -f /var/tmp/slurm-20.11.7.tar.bz2 -C /var/tmp -j && \
+    cd /var/tmp/slurm-20.11.7 &&   ./configure --prefix=/usr/local/pmi && \
+    cd /var/tmp/slurm-20.11.7 && \
+    make -C contribs/pmi2 install && \
+    rm -rf /var/tmp/slurm-20.11.7 /var/tmp/slurm-20.11.7.tar.bz2
+
+# OpenMPI version 4.0.5
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    bzip2 \
+    file \
+    hwloc \
+    libnuma-dev \
+    make \
+    openssh-client \
+    perl \
+    tar \
+    wget && \
+    rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /var/tmp && wget -q -nc --no-check-certificate -P /var/tmp https://www.open-mpi.org/software/ompi/v4.0/downloads/openmpi-4.0.5.tar.bz2 && \
+    mkdir -p /var/tmp && tar -x -f /var/tmp/openmpi-4.0.5.tar.bz2 -C /var/tmp -j && \
+    cd /var/tmp/openmpi-4.0.5 &&   ./configure --prefix=/usr/local/openmpi --disable-getpwuid --disable-oshmem --disable-static --enable-mca-no-build=btl-uct --enable-orterun-prefix-by-default --with-cuda --with-pmi=/usr/local/pmi --with-ucx --without-verbs && \
+    make -j$(nproc) && \
+    make -j$(nproc) install && \
+    echo "/usr/local/openmpi/lib" >> /etc/ld.so.conf.d/hpccm.conf && ldconfig && \
+    rm -rf /var/tmp/openmpi-4.0.5 /var/tmp/openmpi-4.0.5.tar.bz2
+ENV PATH=/usr/local/openmpi/bin:$PATH
+
+# http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-5.7.tar.gz
+RUN mkdir -p /var/tmp && wget -q -nc --no-check-certificate -P /var/tmp http://mvapich.cse.ohio-state.edu/download/mvapich/osu-micro-benchmarks-5.7.tar.gz && \
+    mkdir -p /var/tmp && tar -x -f /var/tmp/osu-micro-benchmarks-5.7.tar.gz -C /var/tmp -z && \
+    cd /var/tmp/osu-micro-benchmarks-5.7 &&  CC=mpicc CXX=mpicxx ./configure --prefix=/usr/local/osu --enable-cuda --with-cuda=/usr/local/cuda && \
+    make -j$(nproc) && \
+    make -j$(nproc) install && \
+    rm -rf /var/tmp/osu-micro-benchmarks-5.7 /var/tmp/osu-micro-benchmarks-5.7.tar.gz
+
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+FROM nvcr.io/nvidia/cuda:11.0-base-ubuntu18.04
+
+# GNU compiler runtime
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    libgfortran4 \
+    libgomp1 && \
+    rm -rf /var/lib/apt/lists/*
+
+# GDRCOPY
+COPY --from=devel /usr/local/gdrcopy /usr/local/gdrcopy
+RUN echo "/usr/local/gdrcopy/lib" >> /etc/ld.so.conf.d/hpccm.conf && ldconfig
+ENV CPATH=/usr/local/gdrcopy/include:$CPATH \
+    LIBRARY_PATH=/usr/local/gdrcopy/lib:$LIBRARY_PATH
+
+# KNEM
+COPY --from=devel /usr/local/knem /usr/local/knem
+RUN echo "/usr/local/knem/lib" >> /etc/ld.so.conf.d/hpccm.conf && ldconfig
+ENV CPATH=/usr/local/knem/include:$CPATH
+
+# OFED
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    libnl-3-200 \
+    libnl-route-3-200 \
+    libnuma1 && \
+    rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /etc/libibverbs.d
+COPY --from=devel /usr/local/ofed /usr/local/ofed
+
+# Mellanox OFED version 5.2-2.2.0.0
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    ca-certificates \
+    gnupg \
+    wget && \
+    rm -rf /var/lib/apt/lists/*
+RUN wget -qO - https://www.mellanox.com/downloads/ofed/RPM-GPG-KEY-Mellanox | apt-key add - && \
+    mkdir -p /etc/apt/sources.list.d && wget -q -nc --no-check-certificate -P /etc/apt/sources.list.d https://linux.mellanox.com/public/repo/mlnx_ofed/5.2-2.2.0.0/ubuntu18.04/mellanox_mlnx_ofed.list && \
+    apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    ibverbs-providers \
+    ibverbs-utils \
+    libibmad-dev \
+    libibmad5 \
+    libibumad-dev \
+    libibumad3 \
+    libibverbs-dev \
+    libibverbs1 \
+    librdmacm-dev \
+    librdmacm1 && \
+    rm -rf /var/lib/apt/lists/*
+
+# UCX
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    libbinutils && \
+    rm -rf /var/lib/apt/lists/*
+COPY --from=devel /usr/local/ucx /usr/local/ucx
+ENV CPATH=/usr/local/ucx/include:$CPATH \
+    LD_LIBRARY_PATH=/usr/local/ucx/lib:$LD_LIBRARY_PATH \
+    LIBRARY_PATH=/usr/local/ucx/lib:$LIBRARY_PATH \
+    PATH=/usr/local/ucx/bin:$PATH
+
+# UCX
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    libbinutils && \
+    rm -rf /var/lib/apt/lists/*
+COPY --from=devel /usr/local/ucx-mlnx-legacy /usr/local/ucx-mlnx-legacy
+
+# SLURM PMI2
+COPY --from=devel /usr/local/pmi /usr/local/pmi
+
+# OpenMPI
+RUN apt-get update -y && \
+    apt-get install -y --no-install-recommends \
+    hwloc \
+    openssh-client && \
+    rm -rf /var/lib/apt/lists/*
+COPY --from=devel /usr/local/openmpi /usr/local/openmpi
+RUN echo "/usr/local/openmpi/lib" >> /etc/ld.so.conf.d/hpccm.conf && ldconfig
+ENV PATH=/usr/local/openmpi/bin:$PATH
+
+ENV OMPI_ALLOW_RUN_AS_ROOT=1 \
+    OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+
+ENV CUDA_CACHE_DISABLE=1 \
+    MELLANOX_VISIBLE_DEVICES=all \
+    OMPI_MCA_pml=ucx
+
+COPY --from=devel /usr/local/osu /usr/local/osu
+
+ENV PATH=/usr/local/osu/libexec/osu-micro-benchmarks:/usr/local/osu/libexec/osu-micro-benchmarks/mpi/collective:/usr/local/osu/libexec/osu-micro-benchmarks/mpi/one-sided:/usr/local/osu/libexec/osu-micro-benchmarks/mpi/pt2pt:/usr/local/osu/libexec/osu-micro-benchmarks/mpi/startup:$PATH
 
 # Linux tooling 
 RUN apt-get update -y &&\
@@ -51,60 +550,6 @@ RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 60
 RUN python --version
 RUN gcc --version
 RUN g++ --version
-
-# MPICH
-#ENV MPICH_VERSION=3.3
-#ENV MPICH_URL="http://www.mpich.org/static/downloads/$MPICH_VERSION/mpich-$MPICH_VERSION.tar.gz"
-#ENV MPICH_DIR=/opt/mpich
-#
-#RUN mkdir -p /tmp/mpich
-#RUN mkdir -p /opt
-#
-## download
-#RUN cd /tmp/mpich && wget -O mpich-$MPICH_VERSION.tar.gz $MPICH_URL && tar xzf mpich-$MPICH_VERSION.tar.gz
-#
-## conf & make
-#RUN cd /tmp/mpich/mpich-$MPICH_VERSION \
-#    && ./configure \
-#    --with-cuda=/usr/local/cuda \
-#    --enable-shared \
-#    --prefix=$MPICH_DIR \
-#    && make install
-#
-## setup env var for LD & path
-#ENV PATH=$MPICH_DIR/bin:$PATH
-#ENV LD_LIBRARY_PATH=$MPICH_DIR/lib:$LD_LIBRARY_PATH
-#ENV MANPATH=$MPICH_DIR/share/man:$MANPATH
-#
-## We need to create a symlink to the extended lib name (This is probably a bug...)
-#RUN ln -s /opt/mpich/lib/libmpich.so /opt/mpich/lib/libmpich.so.0
-# Docker hard limits shared memory usage. MPICH for oversubscribed situation
-# uses shared mem for most of its comunication operations,
-# which leads to a sigbus crash.
-# Both of those (for version <3.2 and >3.2) will force mpich to go
-# through the network stack instead of using the shared nemory
-# The cost is a slower runtime
-# ENV MPIR_CVAR_NOLOCAL=1
-# ENV MPIR_CVAR_CH3_NOLOCAL=1
-
-# OpenMPI
-
-ENV OPENMPI_MAJOR_VERSION=4.1
-ENV OPENMPI_VERSION=4.1.1
-ENV OPENMPI_URL="https://download.open-mpi.org/release/open-mpi/v$OPENMPI_MAJOR_VERSION/openmpi-$OPENMPI_VERSION.tar.gz"
-ENV OPENMPI_DIR=/opt/openmpi
-RUN mkdir -p /tmp/openmpi
-RUN mkdir -p /opt
-RUN cd /tmp/openmpi && wget -O mpich-$OPENMPI_VERSION.tar.gz $OPENMPI_URL && tar xzf mpich-$OPENMPI_VERSION.tar.gz
-RUN cd /tmp/openmpi/openmpi-$OPENMPI_VERSION \
-    && ./configure \
-    --with-cuda=/usr/local/cuda \
-    --prefix=$OPENMPI_DIR \
-    && make all install
-
-ENV PATH=$OPENMPI_DIR/bin:$PATH
-ENV LD_LIBRARY_PATH=$OPENMPI_DIR/lib:$LD_LIBRARY_PATH
-ENV MANPATH=$OPENMPI_DIR/share/man:$MANPATH
 
 #PIP
 # Get a random py3 pip then upgrade it to latest (same for setuptools & wheel)
@@ -180,3 +625,7 @@ RUN mkdir /mnt/data
 # Check everything is running as expect
 COPY ./setup_check.py ./setup_check.py 
 RUN python ./setup_check.py 
+
+COPY PRISM_entrypoint.sh /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
