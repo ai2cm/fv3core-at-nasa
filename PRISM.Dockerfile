@@ -21,6 +21,7 @@ FROM nvcr.io/nvidia/cuda:11.2.0-devel-ubuntu18.04 AS devel
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# In order to go through NASA's proxy reliably when updating the PPA repository of Ubuntu
 RUN printf "Acquire::http::Pipeline-Depth 0;\nAcquire::http::No-Cache true;\nAcquire::BrokenProxy true;" > /etc/apt/apt.conf.d/99fixbadproxy
 
 # GNU compiler
@@ -692,8 +693,8 @@ ENV TMPDIR=/mnt/tmp
 RUN mkdir /mnt/data
 
 # Check everything is running as expect
-COPY ./setup_check.py ./setup_check.py 
-RUN python ./setup_check.py 
+# COPY ./setup_check.py ./setup_check.py 
+# RUN python ./setup_check.py 
 
 COPY PRISM_entrypoint.sh /usr/local/bin/entrypoint.sh
 
