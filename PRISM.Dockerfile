@@ -472,7 +472,7 @@ RUN mkdir -p /var/tmp && wget -q -nc --no-check-certificate -P /var/tmp http://m
 ###########################################################
 ###########################################################
 ###########################################################
-FROM nvcr.io/nvidia/cuda:11.0-base-ubuntu18.04
+#FROM nvcr.io/nvidia/cuda:11.0-base-ubuntu18.04
 
 # GNU compiler runtime
 RUN apt-get update -y && \
