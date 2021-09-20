@@ -17,7 +17,7 @@
 #   - TMPDIR > /local_tmp
 # ===================================
 
-FROM nvcr.io/nvidia/cuda:11.2.0-devel-ubuntu18.04 AS devel
+FROM nvcr.io/nvidia/cuda:11.2.0-devel-ubuntu18.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -484,13 +484,11 @@ RUN apt-get update -y && \
 
 
 # GDRCOPY
-COPY --from=devel /usr/local/gdrcopy /usr/local/gdrcopy
 RUN echo "/usr/local/gdrcopy/lib" >> /etc/ld.so.conf.d/hpccm.conf && ldconfig
 ENV CPATH=/usr/local/gdrcopy/include:$CPATH \
     LIBRARY_PATH=/usr/local/gdrcopy/lib:$LIBRARY_PATH
 
 # KNEM
-COPY --from=devel /usr/local/knem /usr/local/knem
 RUN echo "/usr/local/knem/lib" >> /etc/ld.so.conf.d/hpccm.conf && ldconfig
 ENV CPATH=/usr/local/knem/include:$CPATH
 
@@ -504,7 +502,6 @@ RUN apt-get update -y && \
     apt-get clean
 
 RUN mkdir -p /etc/libibverbs.d
-COPY --from=devel /usr/local/ofed /usr/local/ofed
 
 # Mellanox OFED version 5.2-2.2.0.0
 RUN apt-get update -y && \
@@ -540,7 +537,6 @@ RUN apt-get update -y && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
-COPY --from=devel /usr/local/ucx /usr/local/ucx
 ENV CPATH=/usr/local/ucx/include:$CPATH \
     LD_LIBRARY_PATH=/usr/local/ucx/lib:$LD_LIBRARY_PATH \
     LIBRARY_PATH=/usr/local/ucx/lib:$LIBRARY_PATH \
@@ -553,10 +549,8 @@ RUN apt-get update -y && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
-COPY --from=devel /usr/local/ucx-mlnx-legacy /usr/local/ucx-mlnx-legacy
 
 # SLURM PMI2
-COPY --from=devel /usr/local/pmi /usr/local/pmi
 
 # OpenMPI
 RUN apt-get update -y && \
@@ -566,7 +560,6 @@ RUN apt-get update -y && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean
 
-COPY --from=devel /usr/local/openmpi /usr/local/openmpi
 RUN echo "/usr/local/openmpi/lib" >> /etc/ld.so.conf.d/hpccm.conf && ldconfig
 ENV PATH=/usr/local/openmpi/bin:$PATH
 
@@ -577,7 +570,6 @@ ENV CUDA_CACHE_DISABLE=1 \
     MELLANOX_VISIBLE_DEVICES=all \
     OMPI_MCA_pml=ucx
 
-COPY --from=devel /usr/local/osu /usr/local/osu
 
 ENV PATH=/usr/local/osu/libexec/osu-micro-benchmarks:/usr/local/osu/libexec/osu-micro-benchmarks/mpi/collective:/usr/local/osu/libexec/osu-micro-benchmarks/mpi/one-sided:/usr/local/osu/libexec/osu-micro-benchmarks/mpi/pt2pt:/usr/local/osu/libexec/osu-micro-benchmarks/mpi/startup:$PATH
 
