@@ -472,7 +472,9 @@ RUN mkdir -p /var/tmp && wget -q -nc --no-check-certificate -P /var/tmp http://m
 ###########################################################
 ###########################################################
 ###########################################################
-FROM nvcr.io/nvidia/cuda:11.0-base-ubuntu18.04
+FROM nvcr.io/nvidia/cuda:11.2-base-ubuntu18.04
+
+FROM nvcr.io/nvidia/container-toolkit:11.2-devel-ubuntu18.04
 
 # GNU compiler runtime
 RUN apt-get update -y && \
@@ -697,5 +699,6 @@ RUN mkdir /mnt/data
 # RUN python ./setup_check.py 
 
 COPY PRISM_entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
