@@ -663,8 +663,8 @@ ENV PYTHONPATH=/usr/local/serialbox/python:$PYTHONPATH
 
 # gt4py
 
-RUN python -m pip --no-cache-dir install git+https://github.com/VulcanClimateModeling/gt4py.git@v30
-RUN git clone --depth 1 -b release_v1.1 https://github.com/GridTools/gridtools.git /usr/local/lib/python3.8/dist-packages/gt4py/_external_src/gridtools
+RUN python -m pip --no-cache-dir install git+https://github.com/VulcanClimateModeling/gt4py.git@v35
+RUN git clone --depth 1 -b release_v2.0 https://github.com/GridTools/gridtools.git /usr/local/lib/python3.8/dist-packages/gt4py/_external_src/gridtools
 ENV BOOST_ROOT /usr/local/boost
 ENV CUDA_HOME /usr/local/cuda
 
