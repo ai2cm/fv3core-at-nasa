@@ -358,7 +358,7 @@ ENV PYTHONPATH=/usr/local/serialbox/python:$PYTHONPATH
 # gt4py
 # Install manually GT 1.1 and 2.0+ (master) in the default directory exepcted by GT4PY
 
-RUN git clone --depth 1 -branch v36 https://github.com/ai2cm/gt4py &&\
+RUN git clone --depth 1 --branch v36 https://github.com/ai2cm/gt4py &&\
     RUN git clone --depth 1 -b release_v1.1 https://github.com/GridTools/gridtools.git /gt4py/_external_src/gridtools &&\
     RUN git clone --depth 1 -b master https://github.com/GridTools/gridtools.git /gt4py/_external_src/gridtools2
 RUN python -m pip install -e gt4py
