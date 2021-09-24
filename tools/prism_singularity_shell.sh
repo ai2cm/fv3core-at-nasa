@@ -11,7 +11,7 @@ if [[ ! -e nobackup_tmp ]]; then
     exit -1
 fi
 if [[ ! -f prism_fv3core_sandbox ]]; then
-    echo "No prism_fv3core_sandbox singularity image, did you run prism_singularity_pull?"
+    echo "No prism_fv3core_sandbox singularity image, did you run prism_singularity_pull_sanbox"
     exit -1
 fi
 

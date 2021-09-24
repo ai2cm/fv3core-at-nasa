@@ -23,15 +23,21 @@ export OMP_NUM_THREADS=4
 REORDER=(0 1 2 3)
 
 # now given the REORDER array, we set CUDA_VISIBLE_DEVICES, NIC_REORDER and CPU_REORDER to for this m$
-#export CUDA_VISIBLE_DEVICES="${GPUS[${REORDER[0]}]},${GPUS[${REORDER[1]}]},${GPUS[${REORDER[2]}]},${GPUS[${REORDER[3]}]},${GPUS[${REORDER[4]}]},${GPUS[${REORDER[5]}]},${GPUS[${REORDER[6]}]},${GPUS[${REORDER[7]}]}"
-export CUDA_VISIBLE_DEVICES=0,1,2,3
+export CUDA_VISIBLE_DEVICES="${GPUS[${REORDER[0]}]},${GPUS[${REORDER[1]}]},${GPUS[${REORDER[2]}]},${GPUS[${REORDER[3]}]},${GPUS[${REORDER[4]}]},${GPUS[${REORDER[5]}]},${GPUS[${REORDER[6]}]},${GPUS[${REORDER[7]}]}"
+#export CUDA_VISIBLE_DEVICES=0,1,2,3
+export SINGULARITYENV_CUDA_VISIBLE_DEVICES=0,1,2,3
 
 lrank=$MV2_COMM_WORLD_LOCAL_RANK
 export MV2_IBA_HCA=${NIC_REORDER[lrank]}
 
-echo "Running ${EXE} ${ARGS}"
+export LOCAL_RANK=$MV2_COMM_WORLD_LOCAL_RANK
+
+echo "Running in_image_runner.sh mounted in /mnt/work"
 
 singularity exec \
-    --nv \
-    --bind ./osu-micro-benchmarks-5.8:/mnt/osu \
-    ./prism_fv3core_sandbox $EXE $ARGS
+        --nv \
+        --bind .:/mnt/work \
+        --bind /lscratch/$USER/tmp:/mnt/tmp \
+        --bind $NOBACKUP/data:/mnt/data \
+        --bind $NOBACKUP/nobackup_tmp:/mnt/gtcache \
+        ./prism_fv3core_sandbox /mnt/work/in_image_runner.sh
