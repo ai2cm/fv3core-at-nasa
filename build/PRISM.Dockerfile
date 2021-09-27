@@ -2,19 +2,19 @@
 # Purpose: testing `fv3core` on GPU
 # Stack:
 #   - based on nvidia-devel ubuntu18 image
-#   - gcc-9.3 (gt4py)
-#   - g++-9.3 (for boost & other built deps)
+#   - gcc-9.3 / g++-9.3
+#   - OFED / GDRCOPY / KNEM / PMI2 > MPI-Cuda
+#   - Nsight Systems
+#   - osu benchmark (in /osu)
 #   - python-3.8 (fv3core, gt4py)
-#   - mpich-dev (from source)
 #   - openmpi (from source, hidden dependancy on ssh)
 #   - Boost-1.70 (for serialbox & gt4py)
 #   - serialbox-2.6.0 (fv3core)
-#   - GT4Py git tag v30 (fv3core)
+#   - GT4Py git tag v36 (fv3core)
 #   - fv3gfts-util HEAD of master (fv3core)
 #   - fv3core HEAD of master (pip install in edit mode)
 # Tools & configuration
 #   - nano
-#   - TMPDIR > /local_tmp
 # ===================================
 
 FROM nvcr.io/nvidia/cuda:11.2.0-devel-ubuntu18.04
