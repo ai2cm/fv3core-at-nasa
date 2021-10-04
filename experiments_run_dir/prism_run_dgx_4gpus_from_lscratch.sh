@@ -32,6 +32,13 @@ export MV2_IBA_HCA=${NIC_REORDER[lrank]}
 
 export LOCAL_RANK=$MV2_COMM_WORLD_LOCAL_RANK
 
+export MV2_USE_CUDA=1
+export MV2_USE_GPUDIRECT=1
+
+export UCX_POSIX_USE_PROC_LINK=n
+export UCX_MEMTYPE_CACHE=n
+export UCX_TLS=mm,rc_x,cuda_copy,gdr_copy,cuda_ipc
+
 set -e
 set -x
 
@@ -47,4 +54,4 @@ singularity exec \
         --bind /lscratch/$USER/tmp:/mnt/tmp \
         --bind $NOBACKUP/data:/mnt/data \
         --bind $NOBACKUP/nobackup_tmp:/mnt/gtcache \
-        ./prism_fv3core_sandbox /mnt/work/in_image_runner.sh
+        /lscratch/$USER/prism_fv3core_sandbox /mnt/work/in_image_runner.sh

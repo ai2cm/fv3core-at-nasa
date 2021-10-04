@@ -5,12 +5,6 @@
 #SBATCH --nodes=2
 #SBATCH -o osu_bench.out
 
-echo ">>>>>>>>>>>>>>>>>><<<<<<<<<<<<<<<<<<"
-
-export MV2_USE_CUDA=1
-export MV2_USE_GPUDIRECT=1
-
-export EXE="/osu/get_local_rank /osu/mpi/pt2pt/osu_bw"
-export ARGS="H H"
+echo ">>>>>>>>>>>>>>>>>> OSU BW <<<<<<<<<<<<<<<<<<"
 
 srun --mpi=pmi2 ../run_dgx_4gpus.sh
