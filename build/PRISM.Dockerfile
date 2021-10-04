@@ -17,7 +17,7 @@
 #   - nano
 # ===================================
 
-FROM nvcr.io/nvidia/cuda:11.2.0-devel-ubuntu18.04
+FROM nvcr.io/nvidia/cuda:11.0-devel-ubuntu18.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -314,7 +314,7 @@ RUN python -m pip --no-cache-dir install --upgrade pip && \
     python -m pip --no-cache-dir install wheel
 
 # Py default packages
-RUN python -m pip --no-cache-dir install kiwisolver numpy matplotlib cupy-cuda112 Cython h5py six zipp pytest pytest-profiling pytest-subtests  hypothesis gitpython clang-format gprof2dot cftime f90nml pandas pyparsing python-dateutil pytz pyyaml xarray zarr git+https://github.com/mpi4py/mpi4py.git@aac3d8f2a56f3d74a75ad32ac0554d63e7ef90ab
+RUN python -m pip --no-cache-dir install kiwisolver numpy matplotlib cupy-cuda110 Cython h5py six zipp pytest pytest-profiling pytest-subtests  hypothesis gitpython clang-format gprof2dot cftime f90nml pandas pyparsing python-dateutil pytz pyyaml xarray zarr git+https://github.com/mpi4py/mpi4py.git@aac3d8f2a56f3d74a75ad32ac0554d63e7ef90ab
 
 # Boost version 1.76.0
 RUN apt-get update -y && \
@@ -359,8 +359,8 @@ ENV PYTHONPATH=/usr/local/serialbox/python:$PYTHONPATH
 # Install manually GT 1.1 and 2.0+ (master) in the default directory exepcted by GT4PY
 
 RUN git clone --depth 1 --branch v36 https://github.com/ai2cm/gt4py
-RUN git clone --depth 1 -b release_v1.1 https://github.com/GridTools/gridtools.git /gt4py/_external_src/gridtools
-RUN git clone --depth 1 -b master https://github.com/GridTools/gridtools.git /gt4py/_external_src/gridtools2
+RUN git clone --depth 1 -b release_v1.1 https://github.com/GridTools/gridtools.git /gt4py/src/gt4py/_external_src/gridtools
+RUN git clone --depth 1 -b master https://github.com/GridTools/gridtools.git /gt4py/src/gt4py/_external_src/gridtools2
 RUN python -m pip install -e gt4py
 ENV BOOST_ROOT /usr/local/boost
 ENV CUDA_HOME /usr/local/cuda
