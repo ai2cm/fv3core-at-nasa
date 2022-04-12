@@ -156,5 +156,4 @@ RUN git clone --branch FV3v1 https://github.com/spcl/dace.git &&\
 # ADD SC22 /gt_cache/
 
 # Copy runner & namelist
-ADD /SC22/c192_6ranks_baroclinic/ /
-ADD /SC22/runner.sh /
+ADD /SC22/ /
