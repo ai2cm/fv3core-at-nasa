@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/cuda:11.2-devel-ubuntu18.04
+FROM nvcr.io/nvidia/cuda:11.0-devel-ubuntu18.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -81,16 +81,6 @@ RUN python --version
 RUN gcc --version
 RUN g++ --version
 
-#PIP
-# Get a random py3 pip then upgrade it to latest (same for setuptools & wheel)
-RUN apt-get update -y &&\
-    apt install -y --no-install-recommends\
-    python3-pip
-
-RUN python -m pip --no-cache-dir install --upgrade pip && \
-    python -m pip --no-cache-dir install setuptools &&\
-    python -m pip --no-cache-dir install wheel
-
 # CMake version 3.18.3
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
@@ -104,6 +94,16 @@ RUN mkdir -p /var/tmp && wget -q -nc --no-check-certificate -P /var/tmp https://
     /bin/sh /var/tmp/cmake-3.18.3-Linux-x86_64.sh --prefix=/usr/local --skip-license && \
     rm -rf /var/tmp/cmake-3.18.3-Linux-x86_64.sh
 ENV PATH=/usr/local/bin:$PATH
+
+#PIP
+# Get a random py3 pip then upgrade it to latest (same for setuptools & wheel)
+RUN apt-get update -y &&\
+    apt install -y --no-install-recommends\
+    python3-pip
+
+RUN python -m pip --no-cache-dir install --upgrade pip && \
+    python -m pip --no-cache-dir install setuptools &&\
+    python -m pip --no-cache-dir install wheel
 
 # Py default packages
 RUN python -m pip --no-cache-dir \
@@ -136,23 +136,25 @@ RUN python -m pip --no-cache-dir \
 RUN LDFLAGS='-L /usr/local/cuda/lib64 -lcudart -lcuda' MPICC=mpicc pip install mpi4py
 
 # gt4py - no GridTools
-RUN git clone --depth 1 --branch SC22 https://github.com/gronerl/gt4py
-RUN python -m pip install -e gt4py
+RUN git clone --branch SC22 https://github.com/gronerl/gt4py &&\
+    python -m pip install ./gt4py
 
-# fv3gfs-util
-RUN git clone --depth 1 --branch SC22 https://github.com/ai2cm/fv3gfs-util.git &&\
-    python -m pip install -e fv3gfs-util
+# # fv3gfs-util
+RUN git clone --branch SC22 https://github.com/ai2cm/fv3gfs-util.git &&\
+    python -m pip install ./fv3gfs-util
 
-# DaCe
-RUN git clone --depth 1 --branch SC22 https://github.com/ai2cm/fv3gfs-util.git &&\
-    python -m pip install -e fv3gfs-util
+# # fv3core
+RUN git clone --branch SC22 https://github.com/ai2cm/fv3core.git &&\
+    python -m pip install ./fv3core
 
-# fv3core
+# # DaCe
+RUN git clone --branch FV3v1 https://github.com/spcl/dace.git &&\
+    python -m pip install ./dace
 
-RUN git clone --depth 1 --branch SC22 https://github.com/ai2cm/fv3core.git &&\
-    python -m pip install -e fv3core
+# Copy caches & runner
+# RUN mkdir -p /gt_cache
+# ADD SC22 /gt_cache/
 
-# Move tmp to a bind point
-RUN mkdir /mnt/tmp
-ENV TMPDIR=/mnt/tmp
-RUN mkdir /mnt/data
+# Copy runner & namelist
+ADD /SC22/c192_6ranks_baroclinic/ /
+ADD /SC22/runner.sh /
