@@ -1,5 +1,13 @@
-FV3Core @ NASA
-==============
+WIP: DO NOT USE IF YOU DON'T ALREADY KNOW WHY YOU ARE HERE
+=========================================================-
+
+FV3Core Images for HPCs
+=======================
+
+Piz Daint (SC22)
+---------
+
+Image is in build folder `SC22_Artefact.Dockerfile`.
 
 NSLB
 ----
