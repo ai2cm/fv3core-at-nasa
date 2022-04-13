@@ -1,11 +1,16 @@
-FROM nvcr.io/nvidia/cuda:11.0-devel-ubuntu18.04
+FROM nvidia/cuda:11.2.0-devel
 
 ENV DEBIAN_FRONTEND=noninteractive
+
+# User directory
+ENV USER=user
+ENV HOME=/home/user
+RUN mkdir -p /home/user
 
 # GNU compiler
 RUN apt-get update -y && \
     apt install -y --no-install-recommends software-properties-common && \
-    add-apt-repository ppa:ubuntu-toolchain-r/test
+    add-apt-repository ppa:ubuntu-toolchain-r/ppa
 
 RUN apt-get update -y && \
     apt-get install -y --no-install-recommends\
@@ -106,12 +111,12 @@ RUN python -m pip --no-cache-dir install --upgrade pip && \
     python -m pip --no-cache-dir install wheel
 
 # Py default packages
-RUN python -m pip --no-cache-dir \
+RUN python -m pip --no-cache-dir install \
     install \
     kiwisolver \
     numpy \
     matplotlib \
-    cupy-cuda110 \
+    cupy-cuda112 \
     Cython \
     h5py \
     six \
@@ -119,6 +124,7 @@ RUN python -m pip --no-cache-dir \
     pytest \
     pytest-profiling \
     pytest-subtests \
+    pytest-regressions \
     hypothesis \
     gitpython \
     clang-format \
@@ -148,12 +154,5 @@ RUN git clone --branch SC22 https://github.com/ai2cm/fv3core.git &&\
     python -m pip install ./fv3core
 
 # # DaCe
-RUN git clone --branch FV3v1 https://github.com/spcl/dace.git &&\
+RUN git clone --branch FV3v1 --recursive https://github.com/spcl/dace.git &&\
     python -m pip install ./dace
-
-# Copy caches & runner
-# RUN mkdir -p /gt_cache
-# ADD SC22 /gt_cache/
-
-# Copy runner & namelist
-ADD /SC22/ /
